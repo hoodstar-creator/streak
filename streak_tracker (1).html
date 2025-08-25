@@ -1,0 +1,577 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>목표 달성 스트릭 트래커</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: white;
+            padding: 20px;
+            color: #333;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 12px;
+            padding: 30px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+        }
+
+        .goal-section {
+            flex: 1;
+            margin-right: 20px;
+        }
+
+        .goal-label {
+            font-size: 14px;
+            color: #666;
+            margin-bottom: 5px;
+        }
+
+        .goal-input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 16px;
+            outline: none;
+            transition: border-color 0.3s;
+        }
+
+        .goal-input:focus {
+            border-color: #90EE90;
+        }
+
+        .streak-info {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .current-streak {
+            font-size: 48px;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 5px;
+        }
+
+        .streak-label {
+            font-size: 18px;
+            color: #666;
+        }
+
+        .calendar-container {
+            position: relative;
+            margin-bottom: 30px;
+        }
+
+        .calendar {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 4px;
+            margin-bottom: 20px;
+        }
+
+        .day-header {
+            text-align: center;
+            font-weight: bold;
+            padding: 8px;
+            color: #666;
+            font-size: 14px;
+        }
+
+        .day {
+            width: 40px;
+            height: 40px;
+            border-radius: 8px;
+            background-color: #f0f0f0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            font-weight: bold;
+            margin: 2px;
+            position: relative;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .day:hover {
+            transform: scale(1.1);
+        }
+
+        .day.normal {
+            background-color: #90EE90;
+            color: white;
+        }
+
+        .day.good {
+            background-color: #7FDD7F;
+            color: white;
+        }
+
+        .day.excellent {
+            background-color: #32CD32;
+            color: white;
+        }
+
+        .day.today {
+            border: 2px solid #333;
+        }
+
+        .day.inactive {
+            background-color: #f5f5f5;
+            color: #ccc;
+        }
+
+        .month-navigation {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .month-title {
+            font-size: 20px;
+            font-weight: bold;
+            color: #333;
+        }
+
+        .nav-button {
+            background: none;
+            border: none;
+            font-size: 20px;
+            cursor: pointer;
+            padding: 10px;
+            border-radius: 50%;
+            transition: background-color 0.3s;
+        }
+
+        .nav-button:hover {
+            background-color: #f0f0f0;
+        }
+
+        .controls {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .control-button {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 25px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 14px;
+            transition: all 0.3s;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+            min-width: 100px;
+        }
+
+        .control-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+        }
+
+        .excellent-btn {
+            background-color: #32CD32;
+            color: white;
+        }
+
+        .good-btn {
+            background-color: #7FDD7F;
+            color: white;
+        }
+
+        .normal-btn {
+            background-color: #90EE90;
+            color: white;
+        }
+
+        .cancel-btn {
+            background-color: #ff4757;
+            color: white;
+        }
+
+        .stats {
+            margin-top: 30px;
+            padding: 20px;
+            background-color: #f8f9fa;
+            border-radius: 10px;
+        }
+
+        .stats-title {
+            font-size: 18px;
+            font-weight: bold;
+            margin-bottom: 15px;
+            color: #333;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 15px;
+        }
+
+        .stat-item {
+            text-align: center;
+            padding: 10px;
+            background: white;
+            border-radius: 8px;
+        }
+
+        .stat-value {
+            font-size: 24px;
+            font-weight: bold;
+            color: #32CD32;
+        }
+
+        .stat-label {
+            font-size: 12px;
+            color: #666;
+            margin-top: 5px;
+        }
+
+        .legend {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            margin-top: 20px;
+            flex-wrap: wrap;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .legend-color {
+            width: 20px;
+            height: 20px;
+            border-radius: 4px;
+        }
+
+        .reset-btn {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: #ff4757;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 12px;
+            transition: background-color 0.3s;
+        }
+
+        .reset-btn:hover {
+            background: #ff3838;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="goal-section">
+                <div class="goal-label">목표</div>
+                <input type="text" class="goal-input" id="goalInput" placeholder="목표를 입력하세요...">
+            </div>
+        </div>
+
+        <div class="streak-info">
+            <div class="current-streak" id="currentStreak">0일</div>
+            <div class="streak-label">현재 스트릭</div>
+        </div>
+
+        <div class="calendar-container">
+            <button class="reset-btn" onclick="resetData()">초기화</button>
+            <div class="month-navigation">
+                <button class="nav-button" onclick="changeMonth(-1)">‹</button>
+                <div class="month-title" id="monthTitle"></div>
+                <button class="nav-button" onclick="changeMonth(1)">›</button>
+            </div>
+            
+            <div class="calendar" id="calendar"></div>
+            
+            <div class="legend">
+                <div class="legend-item">
+                    <div class="legend-color" style="background-color: #f0f0f0;"></div>
+                    <span>없음</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color" style="background-color: #90EE90;"></div>
+                    <span>보통</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color" style="background-color: #7FDD7F;"></div>
+                    <span>잘함</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color" style="background-color: #32CD32;"></div>
+                    <span>매우잘함</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="stats">
+            <div class="stats-title">최근 30일 연속 문제 해결</div>
+            <div class="stats-grid">
+                <div class="stat-item">
+                    <div class="stat-value" id="totalDays">0</div>
+                    <div class="stat-label">총 일수</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value" id="normalDays">0</div>
+                    <div class="stat-label">보통</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value" id="goodDays">0</div>
+                    <div class="stat-label">잘함</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value" id="excellentDays">0</div>
+                    <div class="stat-label">매우잘함</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="controls">
+            <button class="control-button excellent-btn" onclick="markDay('excellent')">매우잘함</button>
+            <button class="control-button good-btn" onclick="markDay('good')">잘함</button>
+            <button class="control-button normal-btn" onclick="markDay('normal')">보통</button>
+            <button class="control-button cancel-btn" onclick="cancelToday()">오늘 취소</button>
+        </div>
+    </div>
+
+    <script>
+        let currentDate = new Date();
+        let displayDate = new Date();
+        let streakData = JSON.parse(localStorage.getItem('streakData')) || {};
+        let goal = localStorage.getItem('streakGoal') || '';
+
+        const dayHeaders = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
+        const months = ['1월', '2월', '3월', '4월', '5월', '6월', '7월', '8월', '9월', '10월', '11월', '12월'];
+
+        function initializeApp() {
+            document.getElementById('goalInput').value = goal;
+            document.getElementById('goalInput').addEventListener('input', saveGoal);
+            updateCalendar();
+            updateStats();
+            updateCurrentStreak();
+        }
+
+        function saveGoal() {
+            goal = document.getElementById('goalInput').value;
+            localStorage.setItem('streakGoal', goal);
+        }
+
+        function getDateKey(date) {
+            return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+        }
+
+        function getKST() {
+            const now = new Date();
+            const utc = now.getTime() + (now.getTimezoneOffset() * 60000);
+            const kst = new Date(utc + (9 * 60 * 60 * 1000));
+            return kst;
+        }
+
+        function getTodayKey() {
+            const kstDate = getKST();
+            return getDateKey(kstDate);
+        }
+
+        function isToday(date) {
+            const kstToday = getKST();
+            return date.getDate() === kstToday.getDate() &&
+                   date.getMonth() === kstToday.getMonth() &&
+                   date.getFullYear() === kstToday.getFullYear();
+        }
+
+        function markDay(level) {
+            const todayKey = getTodayKey();
+            streakData[todayKey] = level;
+            localStorage.setItem('streakData', JSON.stringify(streakData));
+            updateCalendar();
+            updateStats();
+            updateCurrentStreak();
+        }
+
+        function cancelToday() {
+            const todayKey = getTodayKey();
+            if (streakData[todayKey]) {
+                if (confirm('오늘의 스트릭을 취소하시겠습니까?')) {
+                    delete streakData[todayKey];
+                    localStorage.setItem('streakData', JSON.stringify(streakData));
+                    updateCalendar();
+                    updateStats();
+                    updateCurrentStreak();
+                }
+            } else {
+                alert('오늘은 아직 기록이 없습니다.');
+            }
+        }
+
+        function updateCalendar() {
+            const calendar = document.getElementById('calendar');
+            const monthTitle = document.getElementById('monthTitle');
+            
+            calendar.innerHTML = '';
+            
+            // 월 제목 설정
+            monthTitle.textContent = `${displayDate.getFullYear()}년 ${months[displayDate.getMonth()]}`;
+            
+            // 요일 헤더 추가
+            dayHeaders.forEach(day => {
+                const dayHeader = document.createElement('div');
+                dayHeader.className = 'day-header';
+                dayHeader.textContent = day;
+                calendar.appendChild(dayHeader);
+            });
+            
+            // 달력 날짜 생성
+            const year = displayDate.getFullYear();
+            const month = displayDate.getMonth();
+            const firstDay = new Date(year, month, 1);
+            const lastDay = new Date(year, month + 1, 0);
+            const startDate = new Date(firstDay);
+            startDate.setDate(startDate.getDate() - firstDay.getDay());
+            
+            for (let i = 0; i < 42; i++) {
+                const date = new Date(startDate);
+                date.setDate(startDate.getDate() + i);
+                
+                const dayElement = document.createElement('div');
+                dayElement.className = 'day';
+                dayElement.textContent = date.getDate();
+                
+                const dateKey = getDateKey(date);
+                
+                if (date.getMonth() !== month) {
+                    dayElement.classList.add('inactive');
+                } else {
+                    if (isToday(date)) {
+                        dayElement.classList.add('today');
+                    }
+                    
+                    if (streakData[dateKey]) {
+                        dayElement.classList.add(streakData[dateKey]);
+                    }
+                }
+                
+                calendar.appendChild(dayElement);
+            }
+        }
+
+        function changeMonth(direction) {
+            displayDate.setMonth(displayDate.getMonth() + direction);
+            updateCalendar();
+        }
+
+        function updateCurrentStreak() {
+            let streak = 0;
+            const kstToday = getKST();
+            let checkDate = new Date(kstToday);
+            
+            while (true) {
+                const dateKey = getDateKey(checkDate);
+                if (streakData[dateKey]) {
+                    streak++;
+                    checkDate.setDate(checkDate.getDate() - 1);
+                } else {
+                    break;
+                }
+            }
+            
+            document.getElementById('currentStreak').textContent = `${streak}일`;
+        }
+
+        function updateStats() {
+            const kstToday = getKST();
+            const thirtyDaysAgo = new Date(kstToday);
+            thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+            
+            let totalDays = 0;
+            let normalDays = 0;
+            let goodDays = 0;
+            let excellentDays = 0;
+            
+            for (let i = 0; i < 30; i++) {
+                const checkDate = new Date(thirtyDaysAgo);
+                checkDate.setDate(thirtyDaysAgo.getDate() + i);
+                const dateKey = getDateKey(checkDate);
+                
+                if (streakData[dateKey]) {
+                    totalDays++;
+                    switch (streakData[dateKey]) {
+                        case 'normal': normalDays++; break;
+                        case 'good': goodDays++; break;
+                        case 'excellent': excellentDays++; break;
+                    }
+                }
+            }
+            
+            document.getElementById('totalDays').textContent = totalDays;
+            document.getElementById('normalDays').textContent = normalDays;
+            document.getElementById('goodDays').textContent = goodDays;
+            document.getElementById('excellentDays').textContent = excellentDays;
+        }
+
+        function resetData() {
+            if (confirm('모든 데이터를 초기화하시겠습니까?')) {
+                localStorage.removeItem('streakData');
+                localStorage.removeItem('streakGoal');
+                streakData = {};
+                goal = '';
+                document.getElementById('goalInput').value = '';
+                updateCalendar();
+                updateStats();
+                updateCurrentStreak();
+            }
+        }
+
+        // 매일 자정에 체크 (한국시간 기준)
+        function checkNewDay() {
+            const kst = getKST();
+            const kstMidnight = new Date(kst);
+            kstMidnight.setHours(24, 0, 0, 0);
+            
+            const timeUntilMidnight = kstMidnight - kst;
+            
+            setTimeout(() => {
+                currentDate = new Date();
+                updateCalendar();
+                updateStats();
+                updateCurrentStreak();
+                checkNewDay(); // 다음 자정 체크 설정
+            }, timeUntilMidnight);
+        }
+
+        // 앱 초기화
+        initializeApp();
+        checkNewDay();
+    </script>
+</body>
+</html>
